@@ -1,6 +1,5 @@
 package org.example.pgrouting.config
 
-import jakarta.annotation.PostConstruct
 import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties(prefix = "payment")
