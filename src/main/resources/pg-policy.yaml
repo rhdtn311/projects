@@ -1,0 +1,34 @@
+payment:
+  timeoutSeconds: 10
+  gateways:
+    toss:
+      name: "토스페이먼츠"
+      apiKey: "temp_key_for_toss"
+      supports:
+        - "CREDIT_CARD"
+        - "BANK_TRANSFER"
+        - "NAVER_PAY"
+      fees:
+        CREDIT_CARD: 5.0
+        BANK_TRANSFER: 10.0
+        NAVER_PAY: 15.0
+    inicis:
+      name: "KG이니시스"
+      apiKey: "temp_key_for_inicis"
+      supports:
+        - "CREDIT_CARD"
+        - "BANK_TRANSFER"
+        - "NAVER_PAY"
+      fees:
+        CREDIT_CARD: 3.0
+        BANK_TRANSFER: 12.0
+        NAVER_PAY: 15.0
+    nicepay:
+      name: "나이스페이먼츠"
+      apiKey: "temp_key_for_nicepay"
+      supports:
+        - "CREDIT_CARD"
+        - "BANK_TRANSFER"
+      fees:
+        CREDIT_CARD: 2.0
+        BANK_TRANSFER: 7.0

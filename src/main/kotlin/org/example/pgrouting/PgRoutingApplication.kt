@@ -1,8 +1,11 @@
 package org.example.pgrouting
 
+import org.example.pgrouting.config.PaymentProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
 
+@EnableConfigurationProperties(PaymentProperties::class)
 @SpringBootApplication
 class PgRoutingApplication
 
