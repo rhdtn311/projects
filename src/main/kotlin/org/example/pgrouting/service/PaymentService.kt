@@ -1,5 +1,6 @@
 package org.example.pgrouting.service
 
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException
 import jakarta.transaction.Transactional
 import org.example.pgrouting.config.PaymentProperties
 import org.example.pgrouting.domain.entity.OrderStatus
@@ -66,7 +67,6 @@ class PaymentService(
             try {
                 response = adapter.preparePayment(commonRequest)
                 savePaymentHistorySuccess(adapter, response, order)
-
                 break
             } catch (e: PgClientException) {
                 log.error("${adapter.getName()}사 결제 요청 실패", e)
@@ -77,7 +77,6 @@ class PaymentService(
                     status = TransactionStatus.FAIL_CLIENT_ERROR,
                     exception = e
                 )
-
                 throw RuntimeException("결제 요청 정보가 올바르지 않습니다.", e)
             } catch (e: PgServerException) {
                 log.warn("${adapter.getName()}사 결제 처리 중 오류 및 Timeout 발생", e)
@@ -87,7 +86,10 @@ class PaymentService(
                     status = TransactionStatus.FAIL_SERVER_ERROR,
                     exception = e
                 )
-
+                continue
+            } catch (e: CallNotPermittedException) {
+                log.warn("${adapter.getName()}사 오류 빈도 높으므로 사용하지 않음.", e)
+                savePaymentHistoryFail(order, adapter, TransactionStatus.FAIL_SERVER_ERROR, e)
                 continue
             } catch (e: Exception) {
                 log.error("${adapter.getName()}사 결제 처리 중 알 수 없는 오류 발생", e)
@@ -97,7 +99,6 @@ class PaymentService(
                     status = TransactionStatus.FAIL_SERVER_ERROR,
                     exception = e
                 )
-
                 continue
             }
         }
