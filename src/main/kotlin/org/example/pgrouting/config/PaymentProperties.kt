@@ -5,6 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 @ConfigurationProperties(prefix = "payment")
 data class PaymentProperties(
     val timeoutSeconds: Int,
+    val webhookUrl: String,
     val gateways: Map<String, GatewayProperties> = emptyMap()
 )
 

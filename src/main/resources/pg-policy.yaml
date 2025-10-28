@@ -1,5 +1,6 @@
 payment:
   timeoutSeconds: 10
+  webhookUrl: "https://localhost:8080/payments/webhook"
   gateways:
     toss:
       name: "토스페이먼츠"

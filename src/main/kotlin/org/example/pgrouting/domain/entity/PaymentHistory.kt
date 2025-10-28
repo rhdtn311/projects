@@ -4,7 +4,7 @@ import jakarta.persistence.*
 
 @Entity
 @Table(name = "payment_transactions")
-class PaymentTransaction(
+class PaymentHistory(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
@@ -13,7 +13,7 @@ class PaymentTransaction(
     val pgName: String,
 
     @Column(nullable = false)
-    val pgTransactionId: String,
+    val pgTransactionId: String? = null,
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

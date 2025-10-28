@@ -10,8 +10,6 @@ data class PreparePaymentRequest(
     val amount: Long,
     val productName: String,
     val paymentMethod: String,
-    val successRedirectUrl: String,
-    val failRedirectUrl: String,
     val webhookUrl: String
 )
 

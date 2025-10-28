@@ -27,10 +27,10 @@ class PaymentOrder(
     var status: OrderStatus = OrderStatus.PENDING,
 
     @OneToMany(mappedBy = "paymentOrder")
-    val transactions: MutableList<PaymentTransaction> = mutableListOf()
+    val transactions: MutableList<PaymentHistory> = mutableListOf()
 
 ) : BaseEntity() {
-    fun addTransaction(transaction: PaymentTransaction) {
+    fun addTransaction(transaction: PaymentHistory) {
         this.transactions.add(transaction)
         transaction.paymentOrder = this
     }
