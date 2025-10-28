@@ -40,6 +40,7 @@ class PaymentService(
             )
         )
 
+        var selectedPgName: String? = null
         val adapters = routingService.getGateways(
             paymentMethod = request.paymentMethod,
         )
@@ -50,7 +51,7 @@ class PaymentService(
                 orderId = order.orderId,
                 status = order.status.name,
                 paymentUrl = null,
-                errorMessage = "지원하지 않는 결제수단입니다."
+                errorMessage = "모든 PG사로부터 결제를 진행할 수 없습니다."
             )
         }
 
@@ -66,6 +67,7 @@ class PaymentService(
         for (adapter in adapters) {
             try {
                 response = adapter.preparePayment(commonRequest)
+                selectedPgName = adapter.getName()
                 savePaymentHistorySuccess(adapter, response, order)
                 break
             } catch (e: PgClientException) {
@@ -109,10 +111,13 @@ class PaymentService(
             throw RuntimeException("모든 결제사 연동에 실패했습니다. 잠시 후 다시 시도해주세요.")
         }
 
+        log.info("선택된 PG사:[${selectedPgName}]")
+
         return PaymentResponse(
             orderId = order.orderId,
             status = order.status.name,
             paymentUrl = response.paymentUrl,
+            pgName = selectedPgName,
         )
     }
 

@@ -1,8 +1,11 @@
 package org.example.pgrouting.domain.payment
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
 import org.example.pgrouting.domain.payment.exception.PgClientException
 import org.example.pgrouting.domain.payment.exception.PgServerException
+import org.example.pgrouting.for_test.TestRepository
 import org.slf4j.LoggerFactory
+import org.springframework.http.HttpStatusCode
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.HttpServerErrorException
@@ -10,15 +13,23 @@ import org.springframework.web.client.ResourceAccessException
 import java.util.UUID
 
 @Service
-class NicepayAdapter: PaymentGatewayAdapter {
+class NicepayAdapter(
+    private val testRepository: TestRepository,
+): PaymentGatewayAdapter {
     private val log = LoggerFactory.getLogger(this.javaClass)
 
     override fun getName(): String {
         return "nicepay"
     }
 
+    @CircuitBreaker(name = "nicepay")
     override fun preparePayment(request: PreparePaymentRequest): PreparePaymentResponse {
+        val testInfo = testRepository.findById("nicepay").get()
+
         try {
+            if (testInfo.isSystemFailure) throw HttpServerErrorException(HttpStatusCode.valueOf(500))
+            if (testInfo.isTimeout) throw ResourceAccessException("Timeout")
+
             val pgTransactionId = "nicepay_${UUID.randomUUID()}"
             val paymentUrl = "https://mock.nicepay.com/pay/${request.orderId}"
 

@@ -12,7 +12,7 @@ class PaymentHistory(
     @Column(nullable = false)
     val pgName: String,
 
-    @Column(nullable = false)
+    @Column
     val pgTransactionId: String? = null,
 
     @Enumerated(EnumType.STRING)

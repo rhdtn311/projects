@@ -15,5 +15,5 @@ data class PreparePaymentRequest(
 
 data class PreparePaymentResponse(
     val pgTransactionId: String,
-    val paymentUrl: String
+    val paymentUrl: String,
 )

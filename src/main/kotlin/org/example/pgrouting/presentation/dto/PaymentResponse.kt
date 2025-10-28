@@ -5,4 +5,5 @@ data class PaymentResponse(
     val status: String,
     val paymentUrl: String?,
     val errorMessage: String? = null,
+    val pgName: String? = null,
 )
