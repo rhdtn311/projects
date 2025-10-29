@@ -46,7 +46,7 @@ class PaymentRoutingService(
             }.toSortedMap()
 
         // 3. 우선순위가 같은 PG사끼리 랜덤으로 선택
-        val prioritizedList = sortedGroups.flatMap { (fee, gatewaysInGroup) ->
+        val prioritizedList = sortedGroups.flatMap { (_, gatewaysInGroup) ->
             if (gatewaysInGroup.size == 1) {
                 gatewaysInGroup
             } else {
