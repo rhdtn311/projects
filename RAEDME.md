@@ -77,3 +77,63 @@
 
 1.  **정산 문제:** PG사별로 정산 대금이 서로 다른 날짜에, 다른 포맷으로 들어옵니다. 우리 서비스의 DB 데이터와 PG사의 정산 데이터를 어떻게 비교하고 검증(대사)할 수 있을까요?
 2.  **Webhook 안정성:** PG사가 Webhook을 보냈는데, **우리 서버가 일시적 장애**여서 수신에 실패(e.g., 500 에러 응답)하면 어떻게 될까요? (Hint: 멱등성, Idempotency)
+
+---
+## 프로젝트 세팅법
+
+1. 사전 준비물
+   - JDK 21
+   - Git
+
+2. 소스 받기
+   - Git 사용 시: 저장소를 클론하거나 로컬에 ZIP으로 내려받아 압축 해제
+   - 프로젝트 루트로 이동: `pg-routing`
+
+3. 빌드
+   - 명령어: `./gradlew clean build` (Windows: `gradlew.bat clean build`)
+   - 성공 시 `build/libs/pg-routing-0.0.1-SNAPSHOT.jar` 생성
+
+4. 로컬 설정 확인/수정
+   - `src/main/resources/application.yaml`
+     - 기본 포트: 8080 (변경하려면 `server.port` 설정 추가)
+     - H2 인메모리 DB 사용
+   - `src/main/resources/pg-policy.yaml`
+     - PG사별 수수료 및 지원 수단 정책을 정의하는 파일
+     - 예시:
+       ```yaml
+       gateways:
+         - name: INICIS  # PG사 이름
+           fees:  # PG사별 결제수단 수수료 비율
+             CARD: 0.03  # 카드결제
+             TRANSFER: 0.12  # 계좌이체
+             NAVERPAY: 0.15  # 네이버페이
+           supports: [CARD, TRANSFER, NAVERPAY]  # 지원하는 결제수단
+         - name: TOSS
+           fees:
+             CARD: 0.02
+             TRANSFER: 0.07
+           supports: [CARD, TRANSFER]
+       ```
+     - 필요 시 위 설정값을 수정하여 비율/지원 수단을 환경에 맞게 수정 가능
+
+5. 애플리케이션 실행
+   - 개발 모드: `./gradlew bootRun`
+   - JAR로 실행: `java -jar build/libs/pg-routing-0.0.1-SNAPSHOT.jar`
+
+## 6. 기본 동작 확인
+
+- **테스트 페이지 접속**  
+  브라우저에서 `http://localhost:8080/test.html` 을 엽니다.
+
+- **사전 작업 (필수)**  
+  결제 요청 테스트를 위해, 먼저 각 PG사의 장애 상태를 설정해야 합니다.  
+  테스트 페이지의 **`2. Failover & 서킷 테스트`** 영역에서 아래 버튼을 사용해 상태를 변경합니다.
+
+    - **PG사 정상**: 해당 PG사 요청이 정상 응답됩니다.
+    - **PG사 5xx 강제**: 해당 PG사 요청 시 5xx 서버 오류를 강제로 발생시킵니다.
+    - **PG사 Timeout 강제**: 해당 PG사 요청 시 Timeout 오류를 강제로 발생시킵니다.
+
+- **기본 결제 요청 테스트**
+    1. 금액과 상품명을 입력합니다.
+    2. 원하는 결제수단 버튼을 클릭합니다.
+    3. 결과는 **`3. 서버 응답`** 영역에서 확인할 수 있으며, 어떤 PG사로 라우팅되었는지 확인 가능합니다.
