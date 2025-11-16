@@ -1,8 +1,8 @@
 package org.kong.pgrouting.domain.payment
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
-import org.kong.pgrouting.domain.payment.exception.PgClientException
-import org.kong.pgrouting.domain.payment.exception.PgServerException
+import org.kong.pgrouting.service.exception.PgClientException
+import org.kong.pgrouting.service.exception.PgServerException
 import org.kong.pgrouting.test.TestRepository
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatusCode
