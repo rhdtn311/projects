@@ -88,11 +88,9 @@ class PaymentService(
                     status = TransactionStatus.FAIL_SERVER_ERROR,
                     exception = e
                 )
-                continue
             } catch (e: CallNotPermittedException) {
                 log.warn("${adapter.getName()}사 오류 빈도 높으므로 사용하지 않음.", e)
                 savePaymentHistoryFail(order, adapter, TransactionStatus.FAIL_SERVER_ERROR, e)
-                continue
             } catch (e: Exception) {
                 log.error("${adapter.getName()}사 결제 처리 중 알 수 없는 오류 발생", e)
                 savePaymentHistoryFail(
@@ -101,7 +99,6 @@ class PaymentService(
                     status = TransactionStatus.FAIL_SERVER_ERROR,
                     exception = e
                 )
-                continue
             }
         }
 
