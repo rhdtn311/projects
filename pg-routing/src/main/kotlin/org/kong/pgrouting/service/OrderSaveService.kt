@@ -3,7 +3,6 @@ package org.kong.pgrouting.service
 import org.kong.pgrouting.domain.entity.OrderStatus
 import org.kong.pgrouting.domain.entity.PaymentOrder
 import org.kong.pgrouting.domain.repository.PaymentOrderRepository
-import org.kong.pgrouting.presentation.dto.PaymentRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
@@ -13,7 +12,7 @@ class OrderSaveService(
     private val orderRepository: PaymentOrderRepository,
 ) {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    fun saveNewOrder(request: PaymentRequest): PaymentOrder {
+    fun saveNewOrder(request: PaymentSuccessEvent): PaymentOrder {
         return orderRepository.save(
             PaymentOrder(
                 amount = request.amount,
@@ -24,3 +23,9 @@ class OrderSaveService(
         )
     }
 }
+
+data class PaymentSuccessEvent(
+    val amount: Long,
+    val productName: String,
+    val paymentMethod: String,
+)

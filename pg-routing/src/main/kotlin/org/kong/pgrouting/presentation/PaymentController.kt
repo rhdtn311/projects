@@ -1,5 +1,6 @@
 package org.kong.pgrouting.presentation
 
+import jakarta.validation.Valid
 import org.kong.pgrouting.presentation.dto.PaymentRequest
 import org.kong.pgrouting.presentation.dto.PaymentResponse
 import org.kong.pgrouting.service.PaymentService
@@ -15,7 +16,7 @@ class PaymentController(
 
     @PostMapping("/request")
     fun requestPayment(
-        @RequestBody request: PaymentRequest,
+        @RequestBody @Valid request: PaymentRequest,
     ): ResponseEntity<PaymentResponse> {
 
         val response = paymentService.requestPayment(request)

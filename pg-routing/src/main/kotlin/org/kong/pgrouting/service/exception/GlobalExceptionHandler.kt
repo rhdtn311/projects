@@ -2,11 +2,34 @@ package org.kong.pgrouting.service.exception
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.validation.BindException
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
+    @ExceptionHandler(MethodArgumentNotValidException::class)
+    fun handleMethodArgumentNotValid(e: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> {
+        val messages = e.bindingResult.fieldErrors.joinToString("\n") {
+            "${it.field}: ${it.defaultMessage}"
+        }
+
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(ErrorResponse(messages))
+    }
+
+    @ExceptionHandler(BindException::class)
+    fun handleBindException(e: BindException): ResponseEntity<ErrorResponse> {
+        val messages = e.bindingResult.fieldErrors.joinToString("\n") {
+            "${it.field}: ${it.defaultMessage}"
+        }
+
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(ErrorResponse(messages))
+    }
 
     @ExceptionHandler(PaymentException::class)
     fun handlePaymentException(e: PaymentException): ResponseEntity<ErrorResponse> {
