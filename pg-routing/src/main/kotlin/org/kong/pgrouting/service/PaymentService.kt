@@ -10,23 +10,24 @@ import org.kong.pgrouting.domain.entity.TransactionStatus
 import org.kong.pgrouting.domain.payment.PaymentGatewayAdapter
 import org.kong.pgrouting.domain.payment.PreparePaymentRequest
 import org.kong.pgrouting.domain.payment.PreparePaymentResponse
-import org.kong.pgrouting.service.exception.PgClientException
-import org.kong.pgrouting.service.exception.PgServerException
 import org.kong.pgrouting.domain.payment.service.PaymentRoutingService
-import org.kong.pgrouting.domain.repository.PaymentOrderRepository
+import org.kong.pgrouting.domain.payment.service.SortStrategy
 import org.kong.pgrouting.domain.repository.PaymentHistoryRepository
+import org.kong.pgrouting.domain.repository.PaymentOrderRepository
 import org.kong.pgrouting.presentation.dto.PaymentRequest
 import org.kong.pgrouting.presentation.dto.PaymentResponse
 import org.kong.pgrouting.service.exception.AllGatewaysFailedException
 import org.kong.pgrouting.service.exception.NoAvailableGatewayException
+import org.kong.pgrouting.service.exception.PgClientException
+import org.kong.pgrouting.service.exception.PgServerException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
 class PaymentService(
-    private val orderRepository: PaymentOrderRepository,
     private val paymentHistoryRepository: PaymentHistoryRepository,
     private val routingService: PaymentRoutingService,
+    private val orderRepository: PaymentOrderRepository,
     private val properties: PaymentProperties
 ) {
     private val log = LoggerFactory.getLogger(this.javaClass)
@@ -45,7 +46,9 @@ class PaymentService(
         var selectedPgName: String? = null
         val adapters = routingService.getGateways(
             paymentMethod = request.paymentMethod,
+            sortStrategy = SortStrategy.FEE,
         )
+
         if (adapters.isEmpty()) {
             order.status = OrderStatus.FAILED
             log.error("결제수단 ${request.paymentMethod}를 지원하는 PG사가 존재하지 않습니다.")

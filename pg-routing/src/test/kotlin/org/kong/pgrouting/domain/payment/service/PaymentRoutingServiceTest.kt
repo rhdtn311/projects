@@ -23,9 +23,14 @@ class PaymentRoutingServiceTest : DescribeSpec({
             "toss" to createGatewayProperties(name = "toss", supports = listOf("CARD"))
         )
 
-        val service = PaymentRoutingService(properties, listOf(adapter), registry)
+        val service = PaymentRoutingService(
+            properties,
+            listOf(adapter),
+            filters = listOf(CircuitBreakerFilter(registry), SupportedMethodFilter()),
+            sortStrategies = listOf(FeeBasedRoutingStrategy()),
+        )
 
-        val result = service.getGateways("TRANSFER")
+        val result = service.getGateways("TRANSFER", SortStrategy.FEE)
         result.shouldHaveSize(0)
     }
 
@@ -61,10 +66,15 @@ class PaymentRoutingServiceTest : DescribeSpec({
             ),
         )
 
-        val service = PaymentRoutingService(properties, listOf(toss, nicepay, inicis), registry)
+        val service = PaymentRoutingService(
+            properties,
+            listOf(toss, nicepay, inicis),
+            filters = listOf(CircuitBreakerFilter(registry), SupportedMethodFilter()),
+            sortStrategies = listOf(FeeBasedRoutingStrategy()),
+        )
 
         // when
-        val result = service.getGateways("CARD")
+        val result = service.getGateways("CARD", SortStrategy.FEE)
 
         // then
         result.shouldHaveSize(3)
