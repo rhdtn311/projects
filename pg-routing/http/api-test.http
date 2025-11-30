@@ -1,0 +1,767 @@
+@baseUrl = http://localhost:8080
+
+### 성공 요청 샘플
+POST {{baseUrl}}/request
+Content-Type: application/json
+
+{
+  "amount": 1,
+  "productName": "성공 결제 테스트",
+  "paymentMethod": "CREDIT_CARD"
+}
+
+### 유효성 실패(예: amount 0)
+POST {{baseUrl}}/request
+Content-Type: application/json
+
+{
+  "amount": 0,
+  "productName": "유효성 실패 테스트",
+  "paymentMethod": "CREDIT_CARD"
+}
+
+### 공통: 모든 PG 정상화(reset)
+### toss 정상화
+### [RESET] toss 정상화
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "toss",
+  "isSystemFailure": false,
+  "isTimeout": false
+}
+
+### nicepay 정상화
+### [RESET] nicepay 정상화
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "nicepay",
+  "isSystemFailure": false,
+  "isTimeout": false
+}
+
+### inicis 정상화
+### [RESET] inicis 정상화
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "inicis",
+  "isSystemFailure": false,
+  "isTimeout": false
+}
+
+### 모든 PG 비정상(전부 5xx) 설정 → 라우팅 전부 실패 시나리오 확인용
+### toss 5xx
+### [ALL DOWN] toss 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "toss",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### nicepay 5xx
+### [ALL DOWN] nicepay 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "nicepay",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### inicis 5xx
+### [ALL DOWN] inicis 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "inicis",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### 이 상태에서 결제 요청 (모든 게이트웨이 실패 기대)
+### [ALL DOWN] 결제 요청(전부 실패 기대)
+POST {{baseUrl}}/request
+Content-Type: application/json
+
+{
+  "amount": 1,
+  "productName": "전부 실패 케이스",
+  "paymentMethod": "CREDIT_CARD"
+}
+
+######################################################################
+## PG별 성공/실패 시나리오 세트
+## 각 블록은 다음 순서로 구성됩니다.
+## 1) 타겟 PG만 정상, 나머지 5xx → 타겟 PG로 라우팅되어 성공 기대
+## 2) 타겟 PG 5xx, 나머지 정상 → 다른 PG로 폴백 성공 기대
+## 3) 타겟 PG timeout, 나머지 정상 → 다른 PG로 폴백 성공 기대
+## 4) 타겟 PG 5xx, 나머지 5xx → 전부 실패 기대
+## 5) 타겟 PG timeout, 나머지 5xx → 전부 실패 기대
+######################################################################
+
+### [TOSS] 1) TOSS만 정상, NICEPAY/INICIS 5xx → TOSS로 성공
+### [TOSS 1-1] toss 정상
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "toss",
+  "isSystemFailure": false,
+  "isTimeout": false
+}
+
+### [TOSS 1-2] nicepay 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "nicepay",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [TOSS 1-3] inicis 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "inicis",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [TOSS 1-4] 결제 요청(TOSS로 성공 기대)
+POST {{baseUrl}}/request
+Content-Type: application/json
+
+{
+  "amount": 1,
+  "productName": "TOSS만 정상-성공 기대",
+  "paymentMethod": "CREDIT_CARD"
+}
+
+### [TOSS] 2) TOSS 5xx, NICEPAY/INICIS 정상 → 폴백 성공 기대
+### [TOSS 2-1] toss 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "toss",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [TOSS 2-2] nicepay 정상
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "nicepay",
+  "isSystemFailure": false,
+  "isTimeout": false
+}
+
+### [TOSS 2-3] inicis 정상
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "inicis",
+  "isSystemFailure": false,
+  "isTimeout": false
+}
+
+### [TOSS 2-4] 결제 요청(폴백 성공 기대)
+POST {{baseUrl}}/request
+Content-Type: application/json
+
+{
+  "amount": 1,
+  "productName": "TOSS 5xx-폴백 성공 기대",
+  "paymentMethod": "CREDIT_CARD"
+}
+
+### [TOSS] 3) TOSS timeout, NICEPAY/INICIS 정상 → 폴백 성공 기대
+### [TOSS 3-1] toss timeout
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "toss",
+  "isSystemFailure": false,
+  "isTimeout": true
+}
+
+### [TOSS 3-2] nicepay 정상
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "nicepay",
+  "isSystemFailure": false,
+  "isTimeout": false
+}
+
+### [TOSS 3-3] inicis 정상
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "inicis",
+  "isSystemFailure": false,
+  "isTimeout": false
+}
+
+### [TOSS 3-4] 결제 요청(폴백 성공 기대)
+POST {{baseUrl}}/request
+Content-Type: application/json
+
+{
+  "amount": 1,
+  "productName": "TOSS timeout-폴백 성공 기대",
+  "paymentMethod": "CREDIT_CARD"
+}
+
+### [TOSS] 4) TOSS 5xx, NICEPAY/INICIS 5xx → 전부 실패 기대
+### [TOSS 4-1] toss 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "toss",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [TOSS 4-2] nicepay 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "nicepay",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [TOSS 4-3] inicis 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "inicis",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [TOSS 4-4] 결제 요청(전부 실패 기대)
+POST {{baseUrl}}/request
+Content-Type: application/json
+
+{
+  "amount": 1,
+  "productName": "TOSS 5xx-전부 실패 기대",
+  "paymentMethod": "CREDIT_CARD"
+}
+
+### [TOSS] 5) TOSS timeout, NICEPAY/INICIS 5xx → 전부 실패 기대
+### [TOSS 5-1] toss timeout
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "toss",
+  "isSystemFailure": false,
+  "isTimeout": true
+}
+
+### [TOSS 5-2] nicepay 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "nicepay",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [TOSS 5-3] inicis 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "inicis",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [TOSS 5-4] 결제 요청(전부 실패 기대)
+POST {{baseUrl}}/request
+Content-Type: application/json
+
+{
+  "amount": 1,
+  "productName": "TOSS timeout-전부 실패 기대",
+  "paymentMethod": "CREDIT_CARD"
+}
+
+######################################################################
+### [NICEPAY] 동일한 패턴
+######################################################################
+
+### [NICEPAY] 1) NICEPAY만 정상 → NICEPAY로 성공
+### [NICEPAY 1-1] toss 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "toss",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [NICEPAY 1-2] nicepay 정상
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "nicepay",
+  "isSystemFailure": false,
+  "isTimeout": false
+}
+
+### [NICEPAY 1-3] inicis 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "inicis",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [NICEPAY 1-4] 결제 요청(NICEPAY로 성공 기대)
+POST {{baseUrl}}/request
+Content-Type: application/json
+
+{
+  "amount": 1,
+  "productName": "NICEPAY만 정상-성공 기대",
+  "paymentMethod": "CREDIT_CARD"
+}
+
+### [NICEPAY] 2) NICEPAY 5xx, 나머지 정상 → 폴백 성공
+### [NICEPAY 2-1] toss 정상
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "toss",
+  "isSystemFailure": false,
+  "isTimeout": false
+}
+
+### [NICEPAY 2-2] nicepay 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "nicepay",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [NICEPAY 2-3] inicis 정상
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "inicis",
+  "isSystemFailure": false,
+  "isTimeout": false
+}
+
+### [NICEPAY 2-4] 결제 요청(폴백 성공 기대)
+POST {{baseUrl}}/request
+Content-Type: application/json
+
+{
+  "amount": 1,
+  "productName": "NICEPAY 5xx-폴백 성공 기대",
+  "paymentMethod": "CREDIT_CARD"
+}
+
+### [NICEPAY] 3) NICEPAY timeout, 나머지 정상 → 폴백 성공
+### [NICEPAY 3-1] toss 정상
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "toss",
+  "isSystemFailure": false,
+  "isTimeout": false
+}
+
+### [NICEPAY 3-2] nicepay timeout
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "nicepay",
+  "isSystemFailure": false,
+  "isTimeout": true
+}
+
+### [NICEPAY 3-3] inicis 정상
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "inicis",
+  "isSystemFailure": false,
+  "isTimeout": false
+}
+
+### [NICEPAY 3-4] 결제 요청(폴백 성공 기대)
+POST {{baseUrl}}/request
+Content-Type: application/json
+
+{
+  "amount": 1,
+  "productName": "NICEPAY timeout-폴백 성공 기대",
+  "paymentMethod": "CREDIT_CARD"
+}
+
+### [NICEPAY] 4) NICEPAY 5xx, 나머지 5xx → 전부 실패
+### [NICEPAY 4-1] toss 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "toss",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [NICEPAY 4-2] nicepay 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "nicepay",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [NICEPAY 4-3] inicis 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "inicis",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [NICEPAY 4-4] 결제 요청(전부 실패 기대)
+POST {{baseUrl}}/request
+Content-Type: application/json
+
+{
+  "amount": 1,
+  "productName": "NICEPAY 5xx-전부 실패 기대",
+  "paymentMethod": "CREDIT_CARD"
+}
+
+### [NICEPAY] 5) NICEPAY timeout, 나머지 5xx → 전부 실패
+### [NICEPAY 5-1] toss 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "toss",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [NICEPAY 5-2] nicepay timeout
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "nicepay",
+  "isSystemFailure": false,
+  "isTimeout": true
+}
+
+### [NICEPAY 5-3] inicis 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "inicis",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [NICEPAY 5-4] 결제 요청(전부 실패 기대)
+POST {{baseUrl}}/request
+Content-Type: application/json
+
+{
+  "amount": 1,
+  "productName": "NICEPAY timeout-전부 실패 기대",
+  "paymentMethod": "CREDIT_CARD"
+}
+
+######################################################################
+### [INICIS] 동일한 패턴
+######################################################################
+
+### [INICIS] 1) INICIS만 정상 → INICIS로 성공
+### [INICIS 1-1] toss 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "toss",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [INICIS 1-2] nicepay 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "nicepay",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [INICIS 1-3] inicis 정상
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "inicis",
+  "isSystemFailure": false,
+  "isTimeout": false
+}
+
+### [INICIS 1-4] 결제 요청(INICIS로 성공 기대)
+POST {{baseUrl}}/request
+Content-Type: application/json
+
+{
+  "amount": 1,
+  "productName": "INICIS만 정상-성공 기대",
+  "paymentMethod": "CREDIT_CARD"
+}
+
+### [INICIS] 2) INICIS 5xx, 나머지 정상 → 폴백 성공
+### [INICIS 2-1] toss 정상
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "toss",
+  "isSystemFailure": false,
+  "isTimeout": false
+}
+
+### [INICIS 2-2] nicepay 정상
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "nicepay",
+  "isSystemFailure": false,
+  "isTimeout": false
+}
+
+### [INICIS 2-3] inicis 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "inicis",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [INICIS 2-4] 결제 요청(폴백 성공 기대)
+POST {{baseUrl}}/request
+Content-Type: application/json
+
+{
+  "amount": 1,
+  "productName": "INICIS 5xx-폴백 성공 기대",
+  "paymentMethod": "CREDIT_CARD"
+}
+
+### [INICIS] 3) INICIS timeout, 나머지 정상 → 폴백 성공
+### [INICIS 3-1] toss 정상
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "toss",
+  "isSystemFailure": false,
+  "isTimeout": false
+}
+
+### [INICIS 3-2] nicepay 정상
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "nicepay",
+  "isSystemFailure": false,
+  "isTimeout": false
+}
+
+### [INICIS 3-3] inicis timeout
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "inicis",
+  "isSystemFailure": false,
+  "isTimeout": true
+}
+
+### [INICIS 3-4] 결제 요청(폴백 성공 기대)
+POST {{baseUrl}}/request
+Content-Type: application/json
+
+{
+  "amount": 1,
+  "productName": "INICIS timeout-폴백 성공 기대",
+  "paymentMethod": "CREDIT_CARD"
+}
+
+### [INICIS] 4) INICIS 5xx, 나머지 5xx → 전부 실패
+### [INICIS 4-1] toss 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "toss",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [INICIS 4-2] nicepay 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "nicepay",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [INICIS 4-3] inicis 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "inicis",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [INICIS 4-4] 결제 요청(전부 실패 기대)
+POST {{baseUrl}}/request
+Content-Type: application/json
+
+{
+  "amount": 1,
+  "productName": "INICIS 5xx-전부 실패 기대",
+  "paymentMethod": "CREDIT_CARD"
+}
+
+### [INICIS] 5) INICIS timeout, 나머지 5xx → 전부 실패
+### [INICIS 5-1] toss 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "toss",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [INICIS 5-2] nicepay 5xx
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "nicepay",
+  "isSystemFailure": true,
+  "isTimeout": false
+}
+
+### [INICIS 5-3] inicis timeout
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "inicis",
+  "isSystemFailure": false,
+  "isTimeout": true
+}
+
+### [INICIS 5-4] 결제 요청(전부 실패 기대)
+POST {{baseUrl}}/request
+Content-Type: application/json
+
+{
+  "amount": 1,
+  "productName": "INICIS timeout-전부 실패 기대",
+  "paymentMethod": "CREDIT_CARD"
+}
+
+######################################################################
+### 마무리: 모든 PG 정상화
+######################################################################
+
+### [RESET] toss 정상화
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "toss",
+  "isSystemFailure": false,
+  "isTimeout": false
+}
+
+### [RESET] nicepay 정상화
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "nicepay",
+  "isSystemFailure": false,
+  "isTimeout": false
+}
+
+### [RESET] inicis 정상화
+POST {{baseUrl}}/test/config
+Content-Type: application/json
+
+{
+  "pgName": "inicis",
+  "isSystemFailure": false,
+  "isTimeout": false
+}
